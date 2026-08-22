@@ -24,9 +24,19 @@ router.get(
   controller.listCases
 );
 
+router.delete(
+  "/cases",
+  controller.clearAllCases
+);
+
 router.get(
   "/cases/:sessionId",
   controller.getCase
+);
+
+router.delete(
+  "/cases/:sessionId",
+  controller.deleteCase
 );
 
 router.get(

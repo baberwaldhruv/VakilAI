@@ -54,6 +54,57 @@ async function getCaseBySession(userId, sessionId) {
 
   return caseData;
 }
+async function deleteCaseBySession(userId, sessionId) {
+  const caseData = await get(
+    `
+      SELECT id
+      FROM rti_cases
+      WHERE session_id = ?
+      AND user_id = ?
+    `,
+    [sessionId, userId]
+  );
+
+  if (!caseData) {
+    throw new ApiError(404, "RTI case not found");
+  }
+
+  // 1. Delete associated messages and drafts
+  await run(`DELETE FROM rti_messages WHERE case_id = ?`, [caseData.id]);
+  await run(`DELETE FROM rti_drafts WHERE case_id = ?`, [caseData.id]);
+
+  // 2. Delete the case itself
+  await run(
+    `
+      DELETE FROM rti_cases
+      WHERE id = ? AND user_id = ?
+    `,
+    [caseData.id, userId]
+  );
+
+  return { message: "Case deleted successfully" };
+}
+
+async function clearAllCases(userId) {
+  // Get all case IDs for this user
+  const userCases = await all(
+    `SELECT id FROM rti_cases WHERE user_id = ?`,
+    [userId]
+  );
+
+  const caseIds = userCases.map((c) => c.id);
+
+  if (caseIds.length > 0) {
+    for (const id of caseIds) {
+      await run(`DELETE FROM rti_messages WHERE case_id = ?`, [id]);
+      await run(`DELETE FROM rti_drafts WHERE case_id = ?`, [id]);
+    }
+
+    await run(`DELETE FROM rti_cases WHERE user_id = ?`, [userId]);
+  }
+
+  return { message: "All cases cleared successfully" };
+}
 
 async function chat(userId, sessionId, message) {
   const caseData = await getCaseBySession(
@@ -242,5 +293,7 @@ module.exports = {
   chat,
   getMessages,
   generateDraft,
-  listCases
+  listCases,
+  deleteCaseBySession,
+  clearAllCases
 };

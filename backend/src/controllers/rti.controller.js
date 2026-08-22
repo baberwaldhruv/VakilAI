@@ -94,6 +94,36 @@ async function listCases(req, res, next) {
     next(error);
   }
 }
+async function deleteCase(req, res, next) {
+  try {
+    const result = await rtiService.deleteCaseBySession(
+      req.user.id,
+      req.params.sessionId
+    );
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function clearAllCases(req, res, next) {
+  try {
+    const result = await rtiService.clearAllCases(
+      req.user.id
+    );
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
 module.exports = {
   createCase,
@@ -101,5 +131,7 @@ module.exports = {
   getCase,
   getMessages,
   generateDraft,
-  listCases
+  listCases,
+  deleteCase,
+  clearAllCases
 };
