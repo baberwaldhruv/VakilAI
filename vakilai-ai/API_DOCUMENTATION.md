@@ -445,3 +445,64 @@ Once the service is deployed, these paths will be available under the deployed s
 * `/api/rti/draft` response schema
 * `/api/rti/draft` response example
 * Final deployment URL
+Conversation Flow
+
+The endpoint progressively builds the RTI case as the user provides more information.
+User Message
+↓
+/api/chat/
+↓
+Extract Information
+↓
+Update RTI Case
+↓
+Check Missing Fields
+↓
+┌───────────────────────┐
+│ Information Complete? │
+└───────────┬───────────┘
+│
+┌─────┴─────┐
+│           │
+No          Yes
+│           │
+▼           ▼
+Ask Follow-up   Ready for
+Question        Draft Generation
+│           │
+└─────┬─────┘
+↓
+API Response
+
+Example Conversation
+
+Request 1
+
+I want to file an RTI about road construction in my village.
+
+The service identifies:
+{
+"issue": "road construction"
+}
+
+It then asks for additional information.
+Request 2
+
+The village is Hingona in Rajasthan.
+
+The service updates the case:
+{
+"issue": "road construction",
+"village": "Hingona",
+"state": "Rajasthan"
+}
+
+It then asks for the district and additional project information.
+Request 3
+
+I want to know the sanctioned budget for the road and how much money has been spent so far.
+
+The service updates:
+{
+"information_requested": "sanctioned budget for the road and how much money has been spent so far"
+}
