@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { 
   Plus, 
-  ChevronDown, 
   Mic, 
   SendHorizontal, 
   FileText, 
@@ -10,39 +9,40 @@ import {
   ArrowUpRight 
 } from 'lucide-react';
 import { useTheme } from '../Context/ThemeContext';
-
-const SERVICES = [
-  {
-    id: 'rti',
-    title: 'Draft an RTI',
-    tag: 'RTI Application',
-    description: 'Converts plain-language questions into properly formatted applications for the right department.',
-    icon: FileText,
-    prompt: 'I want to draft an RTI application regarding '
-  },
-  {
-    id: 'rights',
-    title: 'Know your Rights',
-    tag: 'Legal Advisory',
-    description: 'Explains in simple terms what you can do about tenant, consumer, or workplace disputes.',
-    icon: Scale,
-    prompt: 'Explain my legal rights regarding a dispute with '
-  },
-  {
-    id: 'eligibility',
-    title: 'Scheme Eligibility',
-    tag: 'Govt Schemes',
-    description: 'Reads government portals and answers your scheme eligibility questions in plain language.',
-    icon: CheckCircle2,
-    prompt: 'Check my eligibility for government schemes related to '
-  }
-];
+import { useLanguage } from '../Context/LanguageContext';
 
 export default function WelcomeScreen({ input, setInput, onSubmit, loading, onSelectService }) {
   const textareaRef = useRef(null);
   const { theme } = useTheme();
+  const { t, lang } = useLanguage();
 
-  // Auto-resize textarea height smoothly up to 200px as text grows
+  const services = [
+    {
+      id: 'rti',
+      title: t('serviceRtiTitle'),
+      tag: t('serviceRtiTag'),
+      description: t('serviceRtiDesc'),
+      icon: FileText,
+      prompt: lang === 'hi' ? 'मैं RTI आवेदन दाखिल करना चाहता/चाहती हूँ' : 'I want to file an RTI application'
+    },
+    {
+      id: 'rights',
+      title: t('serviceRightsTitle'),
+      tag: t('serviceRightsTag'),
+      description: t('serviceRightsDesc'),
+      icon: Scale,
+      prompt: lang === 'hi' ? 'मुझे मेरे कानूनी अधिकार जानने हैं' : 'I want to know my legal rights'
+    },
+    {
+      id: 'eligibility',
+      title: t('serviceSchemesTitle'),
+      tag: t('serviceSchemesTag'),
+      description: t('serviceSchemesDesc'),
+      icon: CheckCircle2,
+      prompt: lang === 'hi' ? 'सरकारी योजना पात्रता जांचें' : 'Check government scheme eligibility'
+    }
+  ];
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -58,12 +58,13 @@ export default function WelcomeScreen({ input, setInput, onSubmit, loading, onSe
   };
 
   const handleCardClick = (service) => {
+    if (loading) return;
     if (onSelectService) {
       onSelectService(service);
     }
     setInput(service.prompt);
-    if (textareaRef.current) {
-      textareaRef.current.focus();
+    if (onSubmit) {
+      onSubmit(service.prompt);
     }
   };
 
@@ -73,27 +74,28 @@ export default function WelcomeScreen({ input, setInput, onSubmit, loading, onSe
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto my-auto">
         <div className="text-center mb-10">
           <h1
-            className={`text-3xl md:text-5xl font-light tracking-tight font-sans ${
+            className={`text-3xl md:text-5xl font-light tracking-tight ${
               theme === 'dark' ? 'text-[#e3e3e3]' : 'text-[#1e293b]'
             }`}
           >
-            What should we focus on?
+            {t('welcomeTitle')}
           </h1>
           <p className={`text-sm mt-2.5 ${theme === 'dark' ? 'text-[#94a3b8]' : 'text-slate-500'}`}>
-            Select a service to get started or ask anything below
+            {t('welcomeSubtitle')}
           </p>
         </div>
 
         {/* Service Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-          {SERVICES.map((service) => {
+          {services.map((service) => {
             const Icon = service.icon;
             return (
               <button
                 key={service.id}
                 type="button"
                 onClick={() => handleCardClick(service)}
-                className={`group text-left flex flex-col justify-between p-5 rounded-2xl border backdrop-blur-md transition-all duration-200 shadow-lg hover:-translate-y-0.5 cursor-pointer ${
+                disabled={loading}
+                className={`group text-left flex flex-col justify-between p-5 rounded-2xl border backdrop-blur-md transition-all duration-200 shadow-lg hover:-translate-y-0.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                   theme === 'dark'
                     ? 'bg-[#17191e]/75 hover:bg-[#1f2229]/90 border-[#272b35] hover:border-[#383a3d]'
                     : 'bg-white/80 hover:bg-white border-slate-200/90 hover:border-slate-300 shadow-slate-200/50'
@@ -118,17 +120,26 @@ export default function WelcomeScreen({ input, setInput, onSubmit, loading, onSe
                       }`}
                     >
                       {service.tag}
-                      <ArrowUpRight size={13} className="opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                      <ArrowUpRight
+                        size={13}
+                        className="opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                      />
                     </span>
                   </div>
                   <h3
                     className={`text-sm font-medium mb-1.5 transition-colors ${
-                      theme === 'dark' ? 'text-[#f1f5f9] group-hover:text-white' : 'text-slate-800 group-hover:text-slate-950'
+                      theme === 'dark'
+                        ? 'text-[#f1f5f9] group-hover:text-white'
+                        : 'text-slate-800 group-hover:text-slate-950'
                     }`}
                   >
                     {service.title}
                   </h3>
-                  <p className={`text-xs leading-relaxed line-clamp-3 ${theme === 'dark' ? 'text-[#94a3b8]' : 'text-slate-500'}`}>
+                  <p
+                    className={`text-xs leading-relaxed line-clamp-3 ${
+                      theme === 'dark' ? 'text-[#94a3b8]' : 'text-slate-500'
+                    }`}
+                  >
                     {service.description}
                   </p>
                 </div>
@@ -154,7 +165,7 @@ export default function WelcomeScreen({ input, setInput, onSubmit, loading, onSe
                 ? 'hover:bg-[#232730] text-[#94a3b8] hover:text-[#f1f5f9]'
                 : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
             }`}
-            title="Add context or files"
+            title="Add context"
           >
             <Plus size={18} />
           </button>
@@ -165,7 +176,7 @@ export default function WelcomeScreen({ input, setInput, onSubmit, loading, onSe
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={1}
-            placeholder="Ask VakilAI..."
+            placeholder={t('askPlaceholder')}
             className={`flex-1 bg-transparent text-[15px] outline-none resize-none overflow-y-auto leading-relaxed max-h-48 py-1 ${
               theme === 'dark'
                 ? 'text-[#f1f5f9] placeholder-[#64748b]'
@@ -201,8 +212,13 @@ export default function WelcomeScreen({ input, setInput, onSubmit, loading, onSe
                 <SendHorizontal size={15} />
               </button>
             )}
+
           </div>
         </div>
+        {/* Legal Disclaimer */}
+        <p className={`text-[11px] text-center mt-2.5 ${theme === 'dark' ? 'text-[#64748b]' : 'text-slate-400'}`}>
+          {t('disclaimer')}
+        </p>
       </div>
     </div>
   );

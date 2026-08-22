@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { rtiService } from "../services/apiServices";
 import { useAuth } from "../Context/AuthContext";
 import { useTheme } from "../Context/ThemeContext";
+import { useLanguage } from "../Context/LanguageContext";
 import { X } from "lucide-react";
 
 // Modular Components
@@ -17,6 +18,7 @@ export default function RtiChat() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { t } = useLanguage();
 
   const [recentChats, setRecentChats] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -27,7 +29,6 @@ export default function RtiChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const [generatingDraft, setGeneratingDraft] = useState(false);
 
   // Mouse coordinate state for dynamic radial spotlight glow
   const [mousePos, setMousePos] = useState({ x: 50, y: 30 });
@@ -49,7 +50,7 @@ export default function RtiChat() {
       const formatted = (res.data || []).map((c) => ({
         id: c.id,
         sessionId: c.session_id,
-        title: c.issue || "New Legal Draft",
+        title: c.issue || t("newChat"),
       }));
       setRecentChats(formatted);
     } catch (err) {
@@ -150,11 +151,12 @@ export default function RtiChat() {
     }
   };
 
-  // Send Prompt Handler
-  const handleSendMessage = async () => {
-    if (!input.trim() || sending) return;
+  // Unified Send Prompt Handler (accepts direct prompt argument from buttons)
+  const handleSendMessage = async (promptOverride) => {
+    const rawText = typeof promptOverride === "string" ? promptOverride : input;
+    if (!rawText || !rawText.trim() || sending) return;
 
-    const userText = input.trim();
+    const userText = rawText.trim();
     setInput("");
 
     let activeSessionId = sessionId;
@@ -255,7 +257,7 @@ export default function RtiChat() {
                 input={input}
                 setInput={setInput}
                 onSubmit={handleSendMessage}
-                loading={sending}
+                loading={sending || loading}
               />
             ) : (
               <>
@@ -268,8 +270,8 @@ export default function RtiChat() {
                 <PromptInput
                   input={input}
                   setInput={setInput}
-                  onSubmit={handleSendMessage}
-                  loading={sending}
+                  onSubmit={() => handleSendMessage()}
+                  loading={sending || loading}
                 />
               </>
             )}
@@ -286,7 +288,7 @@ export default function RtiChat() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-[#f1f5f9]' : 'text-slate-800'}`}>
-                  Case Intelligence
+                  {t("caseIntelligence")}
                 </h3>
                 <button
                   onClick={() => setShowCasePanel(false)}
@@ -308,29 +310,29 @@ export default function RtiChat() {
                 }`}
               >
                 <div>
-                  <span className="text-[#64748b] block mb-0.5 font-medium">Issue</span>
+                  <span className="text-[#64748b] block mb-0.5 font-medium">{t("issue")}</span>
                   <span className={`font-semibold ${theme === 'dark' ? 'text-[#e2e8f0]' : 'text-slate-800'}`}>
-                    {caseData?.issue || "Pending..."}
+                    {caseData?.issue || t("pending")}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[#64748b] block mb-0.5 font-medium">Target Department</span>
+                  <span className="text-[#64748b] block mb-0.5 font-medium">{t("targetDept")}</span>
                   <span className={`font-semibold ${theme === 'dark' ? 'text-[#e2e8f0]' : 'text-slate-800'}`}>
-                    {caseData?.department || "Pending..."}
+                    {caseData?.department || t("pending")}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[#64748b] block mb-0.5 font-medium">Location</span>
+                  <span className="text-[#64748b] block mb-0.5 font-medium">{t("location")}</span>
                   <span className={theme === 'dark' ? 'text-[#e2e8f0]' : 'text-slate-700'}>
                     {[caseData?.village, caseData?.city, caseData?.district, caseData?.state]
                       .filter(Boolean)
-                      .join(", ") || "Pending..."}
+                      .join(", ") || t("pending")}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[#64748b] block mb-0.5 font-medium">Applicant</span>
+                  <span className="text-[#64748b] block mb-0.5 font-medium">{t("applicant")}</span>
                   <span className={theme === 'dark' ? 'text-[#e2e8f0]' : 'text-slate-700'}>
-                    {caseData?.applicant_name || "Pending..."}
+                    {caseData?.applicant_name || t("pending")}
                   </span>
                 </div>
               </div>
@@ -338,7 +340,7 @@ export default function RtiChat() {
               {draft && (
                 <div className="flex-1 flex flex-col">
                   <h4 className={`text-xs font-semibold mb-2 ${theme === 'dark' ? 'text-[#f1f5f9]' : 'text-slate-800'}`}>
-                    Application Draft
+                    {t("applicationDraft")}
                   </h4>
                   <div
                     className={`flex-1 border rounded-xl p-3 overflow-y-auto ${
