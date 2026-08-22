@@ -13,9 +13,8 @@ Provide a direct, plain-language response with:
 2. Criteria matched and criteria missing
 3. Required documents to apply
 4. Step-by-step application process
-Preferred Language: {"Hindi (हिन्दी)" if language == "hi" else "English"}
-- If the language is 'hi', respond in clear, natural Hindi (Devanagari script) or match the user's script style.
-- Translate formal legal terminology accurately while keeping explanations accessible to the common citizen.
+LANGUAGE INSTRUCTION:
+- Respond in the exact language used by the citizen in their query ({language}). If the query is in English, reply in plain English.
 
 Keep the explanation simple, practical, and free of bureaucratic jargon.
 """

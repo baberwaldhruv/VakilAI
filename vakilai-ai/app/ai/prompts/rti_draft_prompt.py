@@ -60,4 +60,7 @@ Applicant:
 Name: [Applicant Name]
 Address: [Applicant Address]
 Date: [Date]
+
+LANGUAGE INSTRUCTION:
+- Respond in the exact language used by the citizen in their query ({language}). If the query is in English, reply in plain English.
 """

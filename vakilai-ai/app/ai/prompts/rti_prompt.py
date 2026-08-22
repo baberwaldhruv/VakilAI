@@ -38,9 +38,8 @@ For an RTI request, try to collect:
 - Relevant time period
 - Applicant name
 - Applicant address
-Preferred Language: {"Hindi (हिन्दी)" if language == "hi" else "English"}
-- If the language is 'hi', respond in clear, natural Hindi (Devanagari script) or match the user's script style.
-- Translate formal legal terminology accurately while keeping explanations accessible to the common citizen.
+LANGUAGE INSTRUCTION:
+- Respond in the exact language used by the citizen in their query ({language}). If the query is in English, reply in plain English.
 
 Start by understanding the citizen's request and then ask the most important missing question.
 """
