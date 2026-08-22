@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-import { Sparkles, Copy, Check, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Sparkles, Copy, Check, ThumbsUp, ThumbsDown, Download } from 'lucide-react';
 import { useTheme } from '../Context/ThemeContext';
+import jsPDF from 'jspdf';
 
 export default function ChatStream({ messages = [], loading = false, messagesEndRef }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
@@ -13,6 +14,51 @@ export default function ChatStream({ messages = [], loading = false, messagesEnd
     navigator.clipboard.writeText(text);
     setCopiedIndex(idx);
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const handleDownloadPDF = (content) => {
+    if (!content) return;
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const margin = 15;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxWidth = pageWidth - margin * 2;
+    let currentY = 20;
+
+    // Header Title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('APPLICATION UNDER THE RIGHT TO INFORMATION ACT, 2005', pageWidth / 2, currentY, { align: 'center' });
+
+    currentY += 8;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    doc.line(margin, currentY, pageWidth - margin, currentY);
+
+    currentY += 8;
+
+    // Body Text with auto-pagination
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    const splitLines = doc.splitTextToSize(content, maxWidth);
+
+    splitLines.forEach((line) => {
+      if (currentY > pageHeight - 20) {
+        doc.addPage();
+        currentY = 20;
+      }
+      doc.text(line, margin, currentY);
+      currentY += 6;
+    });
+
+    doc.save('RTI_Application_Draft.pdf');
   };
 
   return (
@@ -123,7 +169,7 @@ export default function ChatStream({ messages = [], loading = false, messagesEnd
 
                 {/* Feedback & Actions */}
                 {!msg.isError && (
-                  <div className="flex items-center gap-1.5 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2 mt-3">
                     <button
                       onClick={() => handleCopy(msg.content, idx)}
                       className={`p-1.5 rounded-full transition-colors cursor-pointer ${
@@ -158,6 +204,20 @@ export default function ChatStream({ messages = [], loading = false, messagesEnd
                       title="Bad response"
                     >
                       <ThumbsDown size={15} />
+                    </button>
+
+                    {/* Prominent Download PDF button */}
+                    <button
+                      onClick={() => handleDownloadPDF(msg.content)}
+                      className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-colors cursor-pointer border ml-1 ${
+                        theme === 'dark'
+                          ? 'bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border-blue-500/30'
+                          : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
+                      }`}
+                      title="Download as PDF"
+                    >
+                      <Download size={13} />
+                      <span>Download PDF</span>
                     </button>
                   </div>
                 )}
