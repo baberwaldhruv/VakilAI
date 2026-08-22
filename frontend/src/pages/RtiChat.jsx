@@ -324,19 +324,6 @@ export default function RtiChat() {
         {/* Floating Header */}
         <div className="flex items-center justify-between px-4">
           <Header onNewChat={handleNewChat} />
-          {draft && !showCasePanel && (
-            <button
-              onClick={() => setShowCasePanel(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer border ${
-                theme === 'dark'
-                  ? 'bg-blue-600/20 border-blue-500/40 text-blue-300 hover:bg-blue-600/30'
-                  : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
-              }`}
-            >
-              <FileText size={14} />
-              View Draft & PDF
-            </button>
-          )}
         </div>
 
         {/* Dynamic Center Stage */}
