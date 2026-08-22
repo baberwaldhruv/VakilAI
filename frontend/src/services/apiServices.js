@@ -32,6 +32,9 @@ export const rtiService = {
     api.post(`/api/rti/cases/${sessionId}/chat`, { message }),
   generateDraft: (sessionId) =>
     api.post(`/api/rti/cases/${sessionId}/draft`),
+  // ADD THESE:
+  deleteCase: (sessionId) => api.delete(`/api/rti/cases/${sessionId}`),
+  clearAllCases: () => api.delete("/api/rti/cases"),
 };
 
 // Placeholder Services

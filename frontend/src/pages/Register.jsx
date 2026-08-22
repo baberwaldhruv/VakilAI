@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthContext";
+import { useTheme } from "../Context/ThemeContext";
+import { Lock, Mail, User, ArrowRight } from "lucide-react";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -12,6 +14,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   const { register } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -31,7 +34,7 @@ export default function Register() {
 
     try {
       await register(formData.name, formData.email, formData.password);
-      navigate("/cases", { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err.message || "Registration failed.");
     } finally {
@@ -40,79 +43,185 @@ export default function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-900">
-          Create an Account
-        </h2>
+    <div
+      className={`relative min-h-screen w-screen flex items-center justify-center px-4 select-none overflow-hidden transition-colors duration-300 ${
+        theme === "dark" ? "bg-[#0e0f12] text-[#e3e3e3]" : "bg-[#eef5fc] text-[#1e293b]"
+      }`}
+    >
+      {/* Ambient Background Glows */}
+      <div
+        className={`absolute inset-0 pointer-events-none z-0 ${
+          theme === "dark"
+            ? "bg-[radial-gradient(ellipse_at_top,_#142442_0%,_#0a101d_45%,_#0e0f12_85%)]"
+            : "bg-[radial-gradient(ellipse_at_top,_#c9e2fa_0%,_#dbeefe_35%,_#eef5fc_75%,_#f8fafc_100%)]"
+        }`}
+      />
 
-        {error && (
-          <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">
-            {error}
-          </div>
-        )}
+      <div className="w-full max-w-[420px] relative z-10">
+        <div
+          className={`p-8 md:p-9 rounded-3xl border backdrop-blur-2xl shadow-2xl transition-all ${
+            theme === "dark"
+              ? "bg-[#16181d]/90 border-[#272b35] shadow-black/60"
+              : "bg-white/90 border-slate-200 shadow-slate-200/80"
+          }`}
+        >
+          {/* Logo & Header */}
+          <div className="flex flex-col items-center text-center mb-7">
+            <div className="relative mb-3">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center p-2.5 bg-gradient-to-b from-blue-500/10 to-indigo-500/5 border border-blue-400/20 shadow-lg shadow-blue-500/10">
+                <img
+                  src="/VakilAI.png"
+                  alt="VakilAI Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-3 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="Your Name"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-3 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-3 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="Minimum 8 characters"
-            />
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Join <span className="text-blue-500 font-bold">VakilAI</span>
+            </h1>
+            <p
+              className={`text-xs mt-1.5 ${
+                theme === "dark" ? "text-[#94a3b8]" : "text-slate-500"
+              }`}
+            >
+              Create your account to start generating legal drafts & RTI insights
+            </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 text-white bg-blue-600 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-5 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center font-medium animate-in fade-in">
+              {error}
+            </div>
+          )}
+
+          {/* Registration Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label
+                className={`block text-xs font-medium mb-1.5 ml-1 ${
+                  theme === "dark" ? "text-[#94a3b8]" : "text-slate-600"
+                }`}
+              >
+                Full Name
+              </label>
+              <div className="relative flex items-center">
+                <User
+                  size={16}
+                  className={`absolute left-3.5 pointer-events-none ${
+                    theme === "dark" ? "text-[#64748b]" : "text-slate-400"
+                  }`}
+                />
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Advocate Sharma"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                    theme === "dark"
+                      ? "bg-[#111317] border-[#272b35] text-white placeholder-[#64748b] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                className={`block text-xs font-medium mb-1.5 ml-1 ${
+                  theme === "dark" ? "text-[#94a3b8]" : "text-slate-600"
+                }`}
+              >
+                Email Address
+              </label>
+              <div className="relative flex items-center">
+                <Mail
+                  size={16}
+                  className={`absolute left-3.5 pointer-events-none ${
+                    theme === "dark" ? "text-[#64748b]" : "text-slate-400"
+                  }`}
+                />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@example.com"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                    theme === "dark"
+                      ? "bg-[#111317] border-[#272b35] text-white placeholder-[#64748b] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                className={`block text-xs font-medium mb-1.5 ml-1 ${
+                  theme === "dark" ? "text-[#94a3b8]" : "text-slate-600"
+                }`}
+              >
+                Password
+              </label>
+              <div className="relative flex items-center">
+                <Lock
+                  size={16}
+                  className={`absolute left-3.5 pointer-events-none ${
+                    theme === "dark" ? "text-[#64748b]" : "text-slate-400"
+                  }`}
+                />
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Minimum 8 characters"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                    theme === "dark"
+                      ? "bg-[#111317] border-[#272b35] text-white placeholder-[#64748b] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? (
+                <span>Creating account...</span>
+              ) : (
+                <>
+                  <span>Create account</span>
+                  <ArrowRight size={15} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Sign In Link */}
+          <p
+            className={`mt-6 text-xs text-center ${
+              theme === "dark" ? "text-[#94a3b8]" : "text-slate-500"
+            }`}
           >
-            {loading ? "Creating Account..." : "Register"}
-          </button>
-        </form>
-
-        <p className="text-sm text-center text-gray-600">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Sign in
-          </Link>
-        </p>
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-blue-500 hover:text-blue-400 font-semibold ml-1 transition"
+            >
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { rtiService } from "../services/apiServices";
 import { useAuth } from "../Context/AuthContext";
-import { FileCheck, Sparkles, X, ChevronRight } from "lucide-react";
+import { useTheme } from "../Context/ThemeContext";
+import { X } from "lucide-react";
 
-// Modular Component Imports
+// Modular Components
 import Sidebar from "../components/sidebar";
 import Header from "../components/Header";
 import WelcomeScreen from "../components/WelcomeScreen";
@@ -15,6 +16,7 @@ export default function RtiChat() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
 
   const [recentChats, setRecentChats] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -27,7 +29,7 @@ export default function RtiChat() {
   const [sending, setSending] = useState(false);
   const [generatingDraft, setGeneratingDraft] = useState(false);
 
-  // Mouse coordinate state for the global interactive spotlight glow
+  // Mouse coordinate state for dynamic radial spotlight glow
   const [mousePos, setMousePos] = useState({ x: 50, y: 30 });
   const containerRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -59,12 +61,14 @@ export default function RtiChat() {
     fetchRecentChats();
   }, []);
 
-  // Load session messages and case details
+  // Reset or load session messages and case details when sessionId changes
   useEffect(() => {
     if (!sessionId) {
       setMessages([]);
+      setInput("");
       setCaseData(null);
       setDraft(null);
+      setShowCasePanel(false);
       return;
     }
 
@@ -102,8 +106,13 @@ export default function RtiChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
-  // Sidebar Actions
+  // Reset all state and return to Home/Welcome screen
   const handleNewChat = () => {
+    setMessages([]);
+    setInput("");
+    setCaseData(null);
+    setDraft(null);
+    setShowCasePanel(false);
     navigate("/");
   };
 
@@ -111,9 +120,34 @@ export default function RtiChat() {
     navigate(`/${chat.sessionId}`);
   };
 
-  const handleClearHistory = () => {
-    setRecentChats([]);
-    navigate("/");
+  // Clear all chats from DB
+  const handleClearHistory = async () => {
+    try {
+      if (window.confirm("Are you sure you want to clear all chat history?")) {
+        await rtiService.clearAllCases();
+        setRecentChats([]);
+        handleNewChat();
+      }
+    } catch (err) {
+      console.error("Failed to clear chat history:", err);
+    }
+  };
+
+  // Delete a single specific chat
+  const handleDeleteSingleChat = async (e, chatToDelete) => {
+    e.stopPropagation();
+    try {
+      await rtiService.deleteCase(chatToDelete.sessionId);
+      setRecentChats((prev) =>
+        prev.filter((c) => c.sessionId !== chatToDelete.sessionId)
+      );
+
+      if (sessionId === chatToDelete.sessionId) {
+        handleNewChat();
+      }
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
+    }
   };
 
   // Send Prompt Handler
@@ -139,7 +173,6 @@ export default function RtiChat() {
       }
     }
 
-    // Optimistic UI update
     setMessages((prev) => [
       ...prev,
       { role: "user", content: userText },
@@ -172,83 +205,47 @@ export default function RtiChat() {
     }
   };
 
-  // Generate Draft Action
-  const handleGenerateDraft = async () => {
-    if (!sessionId) return;
-    try {
-      setGeneratingDraft(true);
-      const res = await rtiService.generateDraft(sessionId);
-      setDraft(res.data?.draft);
-      setShowCasePanel(true);
-    } catch (err) {
-      alert(err.message || "Failed to generate RTI draft.");
-    } finally {
-      setGeneratingDraft(false);
-    }
-  };
-
   return (
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="relative flex h-screen w-screen bg-[#0e0f12] text-[#e3e3e3] font-sans antialiased overflow-hidden select-none"
+      className={`relative flex h-screen w-screen font-sans antialiased overflow-hidden select-none transition-colors duration-300 ${
+        theme === 'dark' ? 'bg-[#0e0f12] text-[#e3e3e3]' : 'bg-[#eef5fc] text-[#1e293b]'
+      }`}
     >
-      {/* 1. Global Ambient Top Glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_#142442_0%,_#0a101d_45%,_#0e0f12_85%)] pointer-events-none z-0" />
+      {/* 1. Ambient Top Gradient */}
+      <div
+        className={`absolute inset-0 pointer-events-none z-0 transition-all duration-500 ${
+          theme === 'dark'
+            ? 'bg-[radial-gradient(ellipse_at_top,_#142442_0%,_#0a101d_45%,_#0e0f12_85%)]'
+            : 'bg-[radial-gradient(ellipse_at_top,_#c9e2fa_0%,_#dbeefe_35%,_#eef5fc_75%,_#f8fafc_100%)]'
+        }`}
+      />
 
-      {/* 2. Global Interactive Mouse Spotlight Glow */}
+      {/* 2. Interactive Spotlight Glow */}
       <div
         className="absolute inset-0 pointer-events-none transition-all duration-300 ease-out z-0"
         style={{
-          background: `radial-gradient(750px circle at ${mousePos.x}% ${mousePos.y}%, rgba(29, 78, 216, 0.20), rgba(15, 23, 42, 0.08) 50%, transparent 80%)`,
+          background:
+            theme === 'dark'
+              ? `radial-gradient(750px circle at ${mousePos.x}% ${mousePos.y}%, rgba(29, 78, 216, 0.20), rgba(15, 23, 42, 0.08) 50%, transparent 80%)`
+              : `radial-gradient(750px circle at ${mousePos.x}% ${mousePos.y}%, rgba(147, 197, 253, 0.50), rgba(191, 219, 254, 0.25) 45%, transparent 75%)`,
         }}
       />
 
-      {/* 3. Seamless Glass Sidebar */}
+      {/* 3. Seamless Sidebar */}
       <Sidebar
         onNewChat={handleNewChat}
         recentChats={recentChats}
         onSelectChat={handleSelectChat}
         onClearHistory={handleClearHistory}
+        onDeleteChat={handleDeleteSingleChat}
       />
 
       {/* 4. Main Viewport */}
       <div className="flex-1 flex flex-col h-full min-w-0 relative z-10 bg-transparent overflow-hidden">
         {/* Floating Header */}
-        <Header />
-
-        {/* Optional Subheader for Active Case Info / Draft Trigger */}
-        {/* {sessionId && caseData && (
-          <div className="px-6 py-2 flex items-center justify-between border-b border-[#222630]/30 backdrop-blur-sm z-20">
-            <div className="flex items-center gap-2 text-xs text-[#94a3b8]">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-medium text-[#cbd5e1] truncate max-w-sm">
-                {caseData?.issue || "RTI Case in progress"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {caseData?.ready_to_draft === 1 && (
-                <button
-                  onClick={handleGenerateDraft}
-                  disabled={generatingDraft}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-medium transition cursor-pointer shadow-lg shadow-emerald-900/30"
-                >
-                  <Sparkles size={13} />
-                  <span>{generatingDraft ? "Drafting..." : "Generate Final Draft"}</span>
-                </button>
-              )}
-
-              <button
-                onClick={() => setShowCasePanel(!showCasePanel)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1a1d24] hover:bg-[#232731] text-[#94a3b8] hover:text-[#f1f5f9] text-xs font-medium border border-[#272b35] transition cursor-pointer"
-              >
-                <FileCheck size={13} />
-                <span>{showCasePanel ? "Hide Details" : "View Case Details"}</span>
-              </button>
-            </div>
-          </div>
-        )} */}
+        <Header onNewChat={handleNewChat} />
 
         {/* Dynamic Center Stage */}
         <main className="flex-1 flex flex-row h-full min-h-0 relative z-10 overflow-hidden bg-transparent">
@@ -280,45 +277,81 @@ export default function RtiChat() {
 
           {/* Collapsible Case Info & Draft Side Drawer */}
           {showCasePanel && (
-            <div className="w-80 border-l border-[#222630]/60 bg-[#121419]/90 backdrop-blur-xl p-5 flex flex-col h-full overflow-y-auto animate-in slide-in-from-right duration-200">
+            <div
+              className={`w-80 border-l p-5 flex flex-col h-full overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
+                theme === 'dark'
+                  ? 'border-[#222630]/60 bg-[#121419]/90'
+                  : 'border-slate-200/80 bg-white/90 shadow-2xl'
+              }`}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#f1f5f9]">Case Intelligence</h3>
+                <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-[#f1f5f9]' : 'text-slate-800'}`}>
+                  Case Intelligence
+                </h3>
                 <button
                   onClick={() => setShowCasePanel(false)}
-                  className="p-1 rounded-md hover:bg-[#1e222b] text-[#64748b] hover:text-white"
+                  className={`p-1 rounded-md transition-colors cursor-pointer ${
+                    theme === 'dark'
+                      ? 'hover:bg-[#1e222b] text-[#64748b] hover:text-white'
+                      : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
+                  }`}
                 >
                   <X size={15} />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs bg-[#17191e] p-3.5 rounded-xl border border-[#272b35] mb-4">
+              <div
+                className={`space-y-3 text-xs p-3.5 rounded-xl border mb-4 ${
+                  theme === 'dark'
+                    ? 'bg-[#17191e] border-[#272b35]'
+                    : 'bg-slate-50 border-slate-200 shadow-sm'
+                }`}
+              >
                 <div>
-                  <span className="text-[#64748b] block mb-0.5">Issue</span>
-                  <span className="text-[#e2e8f0] font-medium">{caseData?.issue || "Pending..."}</span>
+                  <span className="text-[#64748b] block mb-0.5 font-medium">Issue</span>
+                  <span className={`font-semibold ${theme === 'dark' ? 'text-[#e2e8f0]' : 'text-slate-800'}`}>
+                    {caseData?.issue || "Pending..."}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-[#64748b] block mb-0.5">Target Department</span>
-                  <span className="text-[#e2e8f0] font-medium">{caseData?.department || "Pending..."}</span>
+                  <span className="text-[#64748b] block mb-0.5 font-medium">Target Department</span>
+                  <span className={`font-semibold ${theme === 'dark' ? 'text-[#e2e8f0]' : 'text-slate-800'}`}>
+                    {caseData?.department || "Pending..."}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-[#64748b] block mb-0.5">Location</span>
-                  <span className="text-[#e2e8f0]">
+                  <span className="text-[#64748b] block mb-0.5 font-medium">Location</span>
+                  <span className={theme === 'dark' ? 'text-[#e2e8f0]' : 'text-slate-700'}>
                     {[caseData?.village, caseData?.city, caseData?.district, caseData?.state]
                       .filter(Boolean)
                       .join(", ") || "Pending..."}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[#64748b] block mb-0.5">Applicant</span>
-                  <span className="text-[#e2e8f0]">{caseData?.applicant_name || "Pending..."}</span>
+                  <span className="text-[#64748b] block mb-0.5 font-medium">Applicant</span>
+                  <span className={theme === 'dark' ? 'text-[#e2e8f0]' : 'text-slate-700'}>
+                    {caseData?.applicant_name || "Pending..."}
+                  </span>
                 </div>
               </div>
 
               {draft && (
                 <div className="flex-1 flex flex-col">
-                  <h4 className="text-xs font-semibold text-[#f1f5f9] mb-2">Application Draft</h4>
-                  <div className="flex-1 bg-[#17191e] border border-[#3b4252] rounded-xl p-3 overflow-y-auto">
-                    <pre className="text-xs text-[#cbd5e1] whitespace-pre-wrap font-sans leading-relaxed">
+                  <h4 className={`text-xs font-semibold mb-2 ${theme === 'dark' ? 'text-[#f1f5f9]' : 'text-slate-800'}`}>
+                    Application Draft
+                  </h4>
+                  <div
+                    className={`flex-1 border rounded-xl p-3 overflow-y-auto ${
+                      theme === 'dark'
+                        ? 'bg-[#17191e] border-[#3b4252]'
+                        : 'bg-white border-slate-200 shadow-sm'
+                    }`}
+                  >
+                    <pre
+                      className={`text-xs whitespace-pre-wrap font-sans leading-relaxed ${
+                        theme === 'dark' ? 'text-[#cbd5e1]' : 'text-slate-700'
+                      }`}
+                    >
                       {draft}
                     </pre>
                   </div>
