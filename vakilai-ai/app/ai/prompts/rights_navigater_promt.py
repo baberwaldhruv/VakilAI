@@ -28,4 +28,7 @@ Important rules:
 - Keep the explanation practical and understandable for a normal person.
 - Consider the user's stated location when giving guidance.
 - Do not unnecessarily use complicated legal terminology.
+Preferred Language: {"Hindi (हिन्दी)" if language == "hi" else "English"}
+- If the language is 'hi', respond in clear, natural Hindi (Devanagari script) or match the user's script style.
+- Translate formal legal terminology accurately while keeping explanations accessible to the common citizen.
 """
