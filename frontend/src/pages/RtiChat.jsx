@@ -4,7 +4,8 @@ import { rtiService } from "../services/apiServices";
 import { useAuth } from "../Context/AuthContext";
 import { useTheme } from "../Context/ThemeContext";
 import { useLanguage } from "../Context/LanguageContext";
-import { X } from "lucide-react";
+import { X, Download, FileText } from "lucide-react";
+import jsPDF from "jspdf";
 
 // Modular Components
 import Sidebar from "../components/sidebar";
@@ -41,6 +42,58 @@ export default function RtiChat() {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setMousePos({ x, y });
+  };
+
+  // PDF Generation Function
+  const handleDownloadPDF = (contentToExport) => {
+    const textContent = contentToExport || draft;
+    if (!textContent) return;
+
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const margin = 15;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxWidth = pageWidth - margin * 2;
+    let currentY = 20;
+
+    // Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("APPLICATION UNDER THE RIGHT TO INFORMATION ACT, 2005", pageWidth / 2, currentY, { align: "center" });
+
+    currentY += 8;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    doc.line(margin, currentY, pageWidth - margin, currentY);
+
+    currentY += 8;
+
+    // Body content with pagination support
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+
+    const splitLines = doc.splitTextToSize(textContent, maxWidth);
+
+    splitLines.forEach((line) => {
+      if (currentY > pageHeight - 20) {
+        doc.addPage();
+        currentY = 20;
+      }
+      doc.text(line, margin, currentY);
+      currentY += 6;
+    });
+
+    // Output filename
+    const filename = caseData?.issue 
+      ? `RTI_${caseData.issue.slice(0, 20).replace(/[^a-zA-Z0-9]/g, "_")}.pdf` 
+      : "RTI_Draft_Application.pdf";
+
+    doc.save(filename);
   };
 
   // Load chat history for Sidebar
@@ -82,7 +135,11 @@ export default function RtiChat() {
         ]);
 
         if (caseRes.status === "fulfilled") {
-          setCaseData(caseRes.value.data);
+          const data = caseRes.value.data;
+          setCaseData(data);
+          if (data?.draft_content || data?.draft) {
+            setDraft(data.draft_content || data.draft);
+          }
         }
 
         if (msgRes.status === "fulfilled") {
@@ -91,6 +148,12 @@ export default function RtiChat() {
             content: m.message || m.content,
           }));
           setMessages(mapped);
+
+          // Find the latest assistant response as draft fallback if not explicitly set
+          const lastAssistant = [...mapped].reverse().find((m) => m.role === "assistant" && !m.isError);
+          if (lastAssistant && lastAssistant.content.includes("To,")) {
+            setDraft(lastAssistant.content);
+          }
         }
       } catch (err) {
         console.error("Error loading chat messages:", err);
@@ -151,7 +214,7 @@ export default function RtiChat() {
     }
   };
 
-  // Unified Send Prompt Handler (accepts direct prompt argument from buttons)
+  // Unified Send Prompt Handler
   const handleSendMessage = async (promptOverride) => {
     const rawText = typeof promptOverride === "string" ? promptOverride : input;
     if (!rawText || !rawText.trim() || sending) return;
@@ -183,14 +246,26 @@ export default function RtiChat() {
 
     try {
       const res = await rtiService.sendMessage(activeSessionId, userText);
-      if (res.data?.response) {
+      const assistantText = res.data?.response;
+      
+      if (assistantText) {
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: res.data.response },
+          { role: "assistant", content: assistantText },
         ]);
+
+        // Auto-detect draft pattern and update draft drawer
+        if (assistantText.includes("Public Information Officer") || assistantText.includes("To,")) {
+          setDraft(assistantText);
+          setShowCasePanel(true);
+        }
       }
+
       if (res.data?.case) {
         setCaseData(res.data.case);
+        if (res.data.case.draft_content) {
+          setDraft(res.data.case.draft_content);
+        }
       }
       fetchRecentChats();
     } catch (err) {
@@ -215,7 +290,7 @@ export default function RtiChat() {
         theme === 'dark' ? 'bg-[#0e0f12] text-[#e3e3e3]' : 'bg-[#eef5fc] text-[#1e293b]'
       }`}
     >
-      {/* 1. Ambient Top Gradient */}
+      {/* Ambient Top Gradient */}
       <div
         className={`absolute inset-0 pointer-events-none z-0 transition-all duration-500 ${
           theme === 'dark'
@@ -224,7 +299,7 @@ export default function RtiChat() {
         }`}
       />
 
-      {/* 2. Interactive Spotlight Glow */}
+      {/* Interactive Spotlight Glow */}
       <div
         className="absolute inset-0 pointer-events-none transition-all duration-300 ease-out z-0"
         style={{
@@ -235,7 +310,7 @@ export default function RtiChat() {
         }}
       />
 
-      {/* 3. Seamless Sidebar */}
+      {/* Sidebar */}
       <Sidebar
         onNewChat={handleNewChat}
         recentChats={recentChats}
@@ -244,10 +319,25 @@ export default function RtiChat() {
         onDeleteChat={handleDeleteSingleChat}
       />
 
-      {/* 4. Main Viewport */}
+      {/* Main Viewport */}
       <div className="flex-1 flex flex-col h-full min-w-0 relative z-10 bg-transparent overflow-hidden">
         {/* Floating Header */}
-        <Header onNewChat={handleNewChat} />
+        <div className="flex items-center justify-between px-4">
+          <Header onNewChat={handleNewChat} />
+          {draft && !showCasePanel && (
+            <button
+              onClick={() => setShowCasePanel(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer border ${
+                theme === 'dark'
+                  ? 'bg-blue-600/20 border-blue-500/40 text-blue-300 hover:bg-blue-600/30'
+                  : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
+              }`}
+            >
+              <FileText size={14} />
+              View Draft & PDF
+            </button>
+          )}
+        </div>
 
         {/* Dynamic Center Stage */}
         <main className="flex-1 flex flex-row h-full min-h-0 relative z-10 overflow-hidden bg-transparent">
@@ -280,7 +370,7 @@ export default function RtiChat() {
           {/* Collapsible Case Info & Draft Side Drawer */}
           {showCasePanel && (
             <div
-              className={`w-80 border-l p-5 flex flex-col h-full overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
+              className={`w-96 border-l p-5 flex flex-col h-full overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
                 theme === 'dark'
                   ? 'border-[#222630]/60 bg-[#121419]/90'
                   : 'border-slate-200/80 bg-white/90 shadow-2xl'
@@ -338,10 +428,19 @@ export default function RtiChat() {
               </div>
 
               {draft && (
-                <div className="flex-1 flex flex-col">
-                  <h4 className={`text-xs font-semibold mb-2 ${theme === 'dark' ? 'text-[#f1f5f9]' : 'text-slate-800'}`}>
-                    {t("applicationDraft")}
-                  </h4>
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className={`text-xs font-semibold ${theme === 'dark' ? 'text-[#f1f5f9]' : 'text-slate-800'}`}>
+                      {t("applicationDraft")}
+                    </h4>
+                    <button
+                      onClick={() => handleDownloadPDF(draft)}
+                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors cursor-pointer shadow-sm"
+                    >
+                      <Download size={13} />
+                      Download PDF
+                    </button>
+                  </div>
                   <div
                     className={`flex-1 border rounded-xl p-3 overflow-y-auto ${
                       theme === 'dark'
