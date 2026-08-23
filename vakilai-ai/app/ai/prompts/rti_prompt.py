@@ -38,8 +38,10 @@ For an RTI request, try to collect:
 - Relevant time period
 - Applicant name
 - Applicant address
-LANGUAGE INSTRUCTION:
-- Respond in the exact language used by the citizen in their query ({language}). If the query is in English, reply in plain English.
-
+LANGUAGE & SCRIPT RULES:
+1. Detect the language of the user's latest message and reply strictly in that SAME language.
+2. If the user writes in English, reply in natural, professional English.
+3. If the user writes in Hindi (Devanagari or Hinglish), reply in Hindi.
+4. DO NOT translate into Hindi if the user message is written in English.
 Start by understanding the citizen's request and then ask the most important missing question.
 """
