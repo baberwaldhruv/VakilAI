@@ -190,7 +190,7 @@ def generate_text_response(prompt: str) -> str:
         ) from e
 def generate_rights_response(user_query: str, language: str = "en") -> str:
     prompt = f"""
-{RIGHTS_NAVIGATOR_SYSTEM_PROMPT.format(language=language)}
+{RIGHTS_NAVIGATOR_PROMPT.format(language=language)}
 
 Citizen Query:
 {user_query}
