@@ -20,8 +20,8 @@ if not api_key:
 client = genai.Client(api_key=api_key)
 
 # Recommended standard model identifiers
-DEFAULT_REASONING_MODEL = "gemini-3.5-flash"
-DEFAULT_FAST_MODEL = "gemini-3.5-flash"
+DEFAULT_REASONING_MODEL = "gemini-3.5-flash-lite"
+DEFAULT_FAST_MODEL = "gemini-3.5-flash-lite"
 
 
 def _call_gemini_with_retry(model: str, contents: any, config: dict = None, max_retries: int = 3):
