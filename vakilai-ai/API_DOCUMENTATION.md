@@ -34,7 +34,8 @@ All API endpoints should be accessed relative to this base URL.
 | `GET`  | `/health`        | Check whether the RTI AI service is running                           |
 | `POST` | `/api/chat/`     | Continue an RTI conversation and collect structured case information  |
 | `POST` | `/api/rti/draft` | Generate an RTI application draft from the collected case information |
-
+| 'POST' | '/api/rights-navigator/analyze'| |'Analyze legal rights, disputes, or guidance needs'|
+|'POST | '/api/scheme/check-eligibility'| |'Evaluate eligibility for government welfare schemes'|
 ---
 
 # 1. Health Check
