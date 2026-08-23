@@ -20,45 +20,6 @@ Live Deployment: https://oosc-neural-nexus.vercel.app/
  An interactive chat workflow that guides the citizen, asks only for missing essential information, and extracts structured legal case summaries.
  # Multi-Language Support
  Delivers legal empowerment across regional languages to break linguistic and literacy barriers.
-
- # Architecture & Tech Stack
-┌─────────────────────────┐        ┌─────────────────────────┐
-│     React Frontend      │  --->  │   Node / Express API    │
-│  (Vite, Tailwind, UI)   │        │     (Gateway & Auth)    │
-└─────────────────────────┘        └───────────┬─────────────┘
-                                               │
-                                               ▼
-                                   ┌─────────────────────────┐
-                                   │  FastAPI AI Microservice│
-                                   │ (Gemini 2.5/3.5 Models) │
-                                   └─────────────────────────┘
-Frontend: React 18, Vite, Tailwind CSS, Lucide Icons, Context 
-APIAI Microservice: Python 3.9+, FastAPI, Google GenAI SDK (Gemini), Pydantic
-Backend / Gateway: Node.js, Express, JWT Authentication, Rate Limiting
-Database: Supabase (PostgreSQL database for case histories, conversation logs, and authentication)
-
-# Repository Structure
-│   ├── src/
-│   │   ├── controllers/      # Route controllers for RTI, rights, auth
-│   │   ├── routes/           # REST endpoints
-│   │   └── server.js         # Entry point
-│   └── package.json
-│
-├── frontend/                 # React client SPA
-│   ├── src/
-│   │   ├── components/       # ChatStream, RightsNavigator, Sidebar
-│   │   ├── pages/            # Login, Register, CasesDashboard, RtiChat
-│   │   └── services/         # API connectors
-│   └── package.json
-│
-└── vakilai-ai/               # Python / FastAPI AI engine
-    ├── app/
-    │   ├── ai/
-    │   │   ├── prompts/      # RTI, Scheme, Rights, & Extraction prompts
-    │   │   └── llm.py        # Gemini client execution & retry handlers
-    │   ├── api/routes/       # Endpoints: /chat, /scheme, /rights-navigator, /rti
-    │   └── main.py           # FastAPI application entry point
-    └── requirements.txt
 # Test Credentials:
 email: oosc_Neural_Nexus@gmail.com
 password: 12345678
