@@ -9,6 +9,7 @@ from app.ai.prompts.rti_prompt import RTI_SYSTEM_PROMPT
 from app.ai.prompts.extraction_prompt import CASE_EXTRACTION_PROMPT
 from app.ai.prompts.rti_draft_prompt import RTI_DRAFT_PROMPT
 from app.ai.prompts.scheme_prompt import SCHEME_ELIGIBILITY_PROMPT
+from app.ai.prompts.rights_navigater_promt import RIGHTS_NAVIGATOR_PROMPT
 
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
@@ -186,4 +187,34 @@ def generate_text_response(prompt: str) -> str:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"AI provider communication error: {e.message}"
+        ) from e
+def generate_rights_response(user_query: str, language: str = "en") -> str:
+    prompt = f"""
+{RIGHTS_NAVIGATOR_SYSTEM_PROMPT.format(language=language)}
+
+Citizen Query:
+{user_query}
+"""
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        if not response.text:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="AI returned an empty response for legal rights.",
+            )
+        return response.text
+
+    except ServerError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Temporary AI service disruption during legal rights evaluation.",
+        ) from e
+
+    except APIError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI provider communication error: {e.message}",
         ) from e
