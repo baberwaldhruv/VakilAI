@@ -2,7 +2,7 @@
 
 VakilAI is an AI-driven legal intelligence platform designed to bridge the gap between complex civic bureaucracy and ordinary citizens. It translates obscure legal statutes, confusing public portals, and fragmented government notices into actionable, plain-language legal guidance and ready-to-file applications.
 
-Live Deployment: https://oosc-neural-nexus.vercel.app/
+Live Deployment: https://vakil-ai-xi.vercel.app/
 > **Important Notice Regarding First Load (Render Cold Start):** 
 > The backend and AI microservice are deployed on free-tier Render instances. If the server has been idle, the initial request may take **45–60 seconds** to wake up from hibernation. If you encounter a temporary server delay or timeout on your first prompt, please give it a minute and start a new chat.
  # Problem & Challenge Statement
